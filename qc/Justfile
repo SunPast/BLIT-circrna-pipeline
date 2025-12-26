@@ -1,0 +1,5 @@
+all:
+    echo "Please run just install in base envir"
+install:
+    mamba install -c conda-forge -c bioconda -y fastp multiqc
+
