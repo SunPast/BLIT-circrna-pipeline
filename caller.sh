@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# This script serves as a universe caller for 
+# This script serves as a universe caller for
 # running circRNA detection with four approaches.
 
 # https://github.com/shenwei356/rush
@@ -14,8 +14,8 @@ FindCirc=${DIR}/FindCirc/FindCirc.sh
 Circexplorer2=${DIR}/Circexplorer2/Circexplorer2.sh
 circRNA_finder=${DIR}/circRNA_finder/circRNA_finder.sh
 
-if [ ! -f ${CIRCexplorer2} ]; then
-    echo "Error: script ${CIRCexplorer2} not found"
+if [ ! -f ${Circexplorer2} ]; then
+    echo "Error: script ${Circexplorer2} not found"
     exit 1
 fi
 
@@ -63,7 +63,7 @@ done
 
 echo "CircRNA identification pipeline with 4 callers"
 echo "=================================================="
-echo "Author: Shixiang Wang (shixiang1994wang@gmail.com)"
+echo "Author: Shixiang Wang (Modified by Jia Ding on 2025/12/26)"
 echo "Latest update: 2023-10-18"
 echo "========================="
 echo ""
@@ -79,8 +79,10 @@ echo "$nthreads threads set by user (a multiple of 8 is recommended)"
 echo "Number of jobs: $njob"
 echo "The pipeline is starting..."
 
-cmds="echo 'starting rush job with setting: {2}, {1}' && bash {2} {1} ${indir} ${oudir} ${nthreads_prog} ${config}"
-echo ${combinations[@]} | ${rush} -D " " -d ";" -T b -k -j ${njob} ${cmds}
+# 修复：确保传递给子脚本的参数顺序正确
+# 原命令可能有问题，根据CIRIquant.sh等子脚本的参数顺序调整
+cmds="echo 'Processing: {1} with {2}' && bash {2} {1} ${indir} ${oudir} ${nthreads_prog} ${config}"
+echo ${combinations[@]} | ${rush} -D " " -d ";" -T b -k -j ${njob} "${cmds}"
 # 一个已知问题，当circrna_finder并行调用过多时需要内存非常大，star可能出现问题崩溃导致结果为空
 # 当发现相关错误时可以合理减少计算资源重跑解决
 # for 循环按样本逐个处理可能会更加稳定（计算时间会延长）
