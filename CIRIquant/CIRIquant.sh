@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 #set -euxo pipefail
 
-source activate CIRIquant
-
 sample=$1
 indir=$2
 oudir=$3
@@ -11,6 +9,9 @@ prefix=${sample}
 
 config=$5
 source ${config}
+
+ENV_PATH="/data/home/dingjia/.local/share/R/blit/appmamba/envs/CIRIquant"
+MICROMAMBA="/data/home/dingjia/.local/bin/micromamba"
 
 #========================================================
 outdir2=${oudir}/${prefix}.CIRI
@@ -31,7 +32,9 @@ fi
 # To avoid error: https://github.com/bioinfo-biols/CIRIquant/issues/37
 rm -rf ${outdir2}/*
 
-CIRIquant -t ${ncpu} \
+# 使用micromamba运行CIRIquant
+${MICROMAMBA} run -p ${ENV_PATH} \
+    CIRIquant -t ${ncpu} \
         -1 ${indir}/${sample}_1.fastq.gz \
         -2 ${indir}/${sample}_2.fastq.gz \
         --config ${CIRI_config} \
@@ -40,12 +43,14 @@ CIRIquant -t ${ncpu} \
         -p ${sample} \
         -v
 
+# 处理输出文件
 grep -v "#" ${prefix}.gtf | awk '{print $14}' | cut -d '.' -f1 > ${prefix}.counts
 grep -v "#" ${prefix}.gtf | awk -v OFS="\t" '{gsub(/[";]/, "", $20); gsub(/[";]/, "", $22); print $1,$4-1,$5,$7,$20,$22}' > ${prefix}.tmp
 paste ${prefix}.tmp ${prefix}.counts > ../${prefix}.CIRI.bed
 
-rm ${prefix}.tmp ${prefix}.counts
-rm -rf align circ
+# 清理文件
+rm -f ${prefix}.tmp ${prefix}.counts ${prefix}.gtf ${prefix}.log 2>/dev/null
+rm -rf align circ 2>/dev/null
 
 echo "Done for ${sample}, final result should be ${prefix}.CIRI.bed"
 echo "End CIRIquant for ${sample} at `date`"

@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-source activate circRNA_finder
-
 # 0. Config
 sample=$1
 indir=$2
@@ -32,16 +30,18 @@ rm -rf ${outdir2}/*
 
 echo "1. Aligning reads..."
 
-STAR --readFilesIn ${indir}/${sample}_1.fastq.gz ${indir}/${sample}_2.fastq.gz \
---runThreadN ${ncpu} --genomeDir ${gdir} \
---chimSegmentMin 20 --chimScoreMin 1 --alignIntronMax 100000 \
---chimOutType Junctions SeparateSAMold --outFilterMismatchNmax 4 \
---alignTranscriptsPerReadNmax 100000 --outFilterMultimapNmax 2 \
---outFileNamePrefix ${sample}. \
---readFilesCommand zcat
+~/.local/bin/micromamba run -n circRNA_finder \
+    STAR --readFilesIn ${indir}/${sample}_1.fastq.gz ${indir}/${sample}_2.fastq.gz \
+    --runThreadN ${ncpu} --genomeDir ${gdir} \
+    --chimSegmentMin 20 --chimScoreMin 1 --alignIntronMax 100000 \
+    --chimOutType Junctions SeparateSAMold --outFilterMismatchNmax 4 \
+    --alignTranscriptsPerReadNmax 100000 --outFilterMultimapNmax 2 \
+    --outFileNamePrefix ${sample}. \
+    --readFilesCommand zcat
 
 echo "2. Analyzing reads..."
-postProcessStarAlignment.pl --starDir ./ --outDir ./
+~/.local/bin/micromamba run -n circRNA_finder \
+    postProcessStarAlignment.pl --starDir ./ --outDir ./
 
 echo "3. Outputing..."
 awk -v OFS="\t" -F"\t" '{print $1,$2,$3,$6,$5}' ${prefix}.filteredJunctions.bed > ../${prefix}.circRNA_finder.bed

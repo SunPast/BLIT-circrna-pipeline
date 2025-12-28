@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-
-source activate Circexplorer2
+#set -euxo pipefail
 
 # 0. Config
 sample=$1
@@ -11,6 +10,9 @@ prefix=${sample}
 
 config=$5
 source ${config}
+
+ENV_PATH="/data/home/dingjia/.local/share/R/blit/appmamba/envs/Circexplorer2"
+MICROMAMBA="/data/home/dingjia/.local/bin/micromamba"
 
 #========================================================
 outdir2=${oudir}/${prefix}.circexplorer2

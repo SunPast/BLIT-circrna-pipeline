@@ -2,34 +2,88 @@ library(blit)
 
 install_appmamba()
 
-# ---------- QC ----------
-appmamba("create", "--yes",
-         "-p", "~/.local/share/R/blit/appmamba/envs/fastp",
-         "-c", "https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge",
-         "-c", "https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/bioconda",
-         "fastp")
+TUNA_CF <- "https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge"
+TUNA_BC <- "https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/bioconda"
 
-# ---------- Call ----------
-appmamba("create", "--yes",
-         "-p", "~/.local/share/R/blit/appmamba/envs/FindCirc",
-         "-c", "https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge",
-         "-c", "https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/bioconda",
-         "bowtie2", "samtools")
+# =======================
+# QC: fastp
+# =======================
 
-appmamba("create", "--yes",
-         "-p", "~/.local/share/R/blit/appmamba/envs/CIRIquant",
-         "-c", "https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge",
-         "-c", "https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/bioconda",
-         "bwa", "hisat2", "samtools")
+appmamba(
+  "create", "--yes",
+  "-p", "~/.local/share/R/blit/appmamba/envs/fastp",
+  "-c", TUNA_CF,
+  "-c", TUNA_BC,
+  "fastp"
+)
 
-appmamba("create", "--yes",
-         "-p", "~/.local/share/R/blit/appmamba/envs/Circexplorer2",
-         "-c", "https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge",
-         "-c", "https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/bioconda",
-         "star", "bedtools", "python=3.10")
+# =======================
+# Call: FindCirc
+# (find_circ + bowtie2 + samtools)
+# =======================
 
-appmamba("create", "--yes",
-         "-p", "~/.local/share/R/blit/appmamba/envs/circRNA_finder",
-         "-c", "https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge",
-         "-c", "https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/bioconda",
-         "star", "perl")
+appmamba(
+  "create", "--yes",
+  "-p", "~/.local/share/R/blit/appmamba/envs/FindCirc",
+  "-c", TUNA_CF,
+  "-c", TUNA_BC,
+  "bowtie2",
+  "samtools"
+)
+
+# =======================
+# Call: CIRIquant
+# ⚠️ 必须 Python <= 3.8
+# =======================
+
+appmamba(
+  "create", "--yes",
+  "-p", "~/.local/share/R/blit/appmamba/envs/CIRIquant",
+  "-c", TUNA_CF,
+  "-c", TUNA_BC,
+  "python=3.9",
+  "ciriquant",
+  "samtools",
+  "bwa",
+  "hisat2"
+)
+
+# =======================
+# Call: CIRCexplorer2
+# (pip only, requires Python)
+# =======================
+
+appmamba(
+  "create", "--yes",
+  "-p", "~/.local/share/R/blit/appmamba/envs/Circexplorer2",
+  "-c", TUNA_CF,
+  "-c", TUNA_BC,
+  "python=3.9",
+  "star",
+  "bedtools",
+  "samtools",
+  "pip"
+)
+
+exec(
+  "~/.local/share/R/blit/appmamba/envs/Circexplorer2/bin/pip",
+  "install",
+  "CIRCexplorer2"
+) |>
+  cmd_run()
+
+# =======================
+# Call: circRNA_finder
+# =======================
+
+appmamba(
+  "create", "--yes",
+  "-p", "~/.local/share/R/blit/appmamba/envs/circRNA_finder",
+  "-c", TUNA_CF,
+  "-c", TUNA_BC,
+  "star",
+  "perl",
+  "samtools"
+)
+
+cat("All BLIT environments installed successfully.\n")

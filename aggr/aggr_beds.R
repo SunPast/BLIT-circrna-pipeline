@@ -1,5 +1,4 @@
 #!/usr/bin/env Rscript
-# Example: ./aggr/aggr_beds.R /home/data/IO_RNA/circRNA/EGA_IMmotion151 test2
 
 library(data.table)
 
@@ -12,11 +11,9 @@ if (length(args) == 1) {
   OutDir = args[2]
 }
 
-GTF = if (file.exists("/home/data/reference/hg38_ek12/gencode.v34.annotation.gtf")) {
-  "/home/data/reference/hg38_ek12/gencode.v34.annotation.gtf"
-} else "/home/zhou/t12b/reference/hg38_ek12/gencode.v34.annotation.gtf"
-
-commonPy = "/home/circrna/circrna-pipeline/common/common.py"
+# Use environment variables or default paths
+GTF = Sys.getenv("GTF_PATH", "/data/home/dingjia/pipeline/gencode.v34.annotation.gtf")
+commonPy = Sys.getenv("COMMON_PY", "/data/home/dingjia/BLIT-pipeline/common/common.py")
 
 stopifnot(file.exists(commonPy), file.exists(GTF), dir.exists(InDir))
 if (!dir.exists(OutDir)) {
@@ -28,9 +25,6 @@ gtf_data = fread(GTF, header = FALSE, sep = "\t", na.strings = c(".", "NA"))
 gtf_data = gtf_data[V3 == "gene"]
 
 message("Extracting gene and region information...")
-# 提取gene_id和symbol信息
-# 一般来说，GTF文件的attributes列是以"; "分隔的键值对，我们可以利用这个信息提取gene_id和symbol
-# 这里假设gene_id和gene_symbol都是以"gene_id"和"gene_name"的形式出现在attributes列中
 gtf_data[, c("gene_id", "gene") := {
   attrs <- tstrsplit(V9, "; ")
   gene_id <- gsub('"', '', attrs[grep("^gene_id", attrs)])
@@ -40,7 +34,6 @@ gtf_data[, c("gene_id", "gene") := {
 
 gtf_data = unique(gtf_data[, list(chr = V1, start = V4, end = V5, gene_id = substr(sub("gene_id ", "", gene_id), 1, 15), gene = sub("gene_name ", "", gene))])
 
-# 输出前几行结果
 message("Checking gtf data...")
 print(head(gtf_data))
 
@@ -50,10 +43,10 @@ fileList = list.files(InDir, pattern = paste0(paste0("(", paste(methods, collaps
 fileListAll = list.files(InDir, pattern = ".bed", full.names = TRUE)
 fileList = fileList[file.info(fileListAll)$size > 0]
 
-# 去除 .bed 后缀
+# Remove .bed suffix
 sample_ids <- gsub("\\.bed$", "", fileList)
 
-# 使用gsub函数去掉指定的后缀
+# Remove method suffixes
 for (suffix in methods) {
   sample_ids <- gsub(paste0("\\.", suffix, "$"), "", sample_ids)
 }
@@ -64,7 +57,6 @@ message(length(sample_ids), " sample(s) detected")
 
 # Functions ------------------------------------------
 overlaps <- function(x, y) {
-  ## Overlaps genome regions from x and y
   if (!is.data.frame(x)) {
     stop("x must be a data.frame")
   }
@@ -95,7 +87,7 @@ aggr_circRNA_beds = function(sample, methods) {
     cmd = paste("cat", paste(bed_files[!nonexists], collapse = " "), "|", commonPy, ">", file.path(OutDir, paste0(sample, ".common.txt")))
     system(cmd)
     bed_common = fread(file.path(OutDir, paste0(sample, ".common.txt")), header = FALSE, sep = "\t")
-    file.remove(file.path(OutDir, paste0(sample, ".common.txt")))  # Remove temp common file
+    file.remove(file.path(OutDir, paste0(sample, ".common.txt")))
 
     # Read all files and filter them
     bed_list = parallel::mclapply(methods[!nonexists], function(x) {
@@ -111,8 +103,8 @@ aggr_circRNA_beds = function(sample, methods) {
       }
 
       if (is.character(d[[5]])) {
-         warning(sprintf("invalid (character) count detected for %s with method %s", sample, x), immediate. = TRUE)
-         d[[5]] = as.integer(d[[5]])
+        warning(sprintf("invalid (character) count detected for %s with method %s", sample, x), immediate. = TRUE)
+        d[[5]] = as.integer(d[[5]])
       }
 
       d$tool = x
@@ -122,13 +114,12 @@ aggr_circRNA_beds = function(sample, methods) {
     colnames(bed_dt) = c("chr", "start", "end", "strand", "count", "tool")
     bed_dt = bed_dt[!is.na(bed_dt$count)]
 
-    # 增加样本水平 circRNA ID 的输出
-    # 方便后续分析不同方法的 overlap 以及统计总量
+    # Add sample-level circRNA ID output
     bed_dt_o = copy(bed_dt)
     bed_dt_o$sample = sample
     fwrite(x = bed_dt_o, file = file_to_all, sep = "\t", append = TRUE)
 
-    # 获取和分析 common circRNA
+    # Get and analyze common circRNA
     if (nrow(bed_common) == 0) {
       warning("no common circRNA detected for sample ", sample, immediate. = TRUE)
       return(invisible(NULL))
@@ -149,23 +140,20 @@ aggr_circRNA_beds = function(sample, methods) {
         i.end >= end, end - i.start + 1,
         i.start > start, i.end - i.start + 1
       ))])
-    # Only keep symbol, as gene_id is not required in downstream
-    # 仅标记最大 overlap 的基因
+
     annot = annot[ , list(gene = gene[which.max(ovp_len)]), by = .(id)]
-    # Some may have no annotation on gene, such cases will not be kept
-    #"chr4-42725521-42744676"
 
     # Final output for one sample
     bed_dt2 = merge(bed_dt, annot, by = "id", all.x = FALSE, all.y = TRUE)
-    solid_ids = bed_dt2[, .(N = sum(count >= 2)), by = .(id)][N >= 1]$id  # id by at least two tools with ≥1 back-splice reads
-    
+    solid_ids = bed_dt2[, .(N = sum(count >= 2)), by = .(id)][N >= 1]$id
+
     if (length(solid_ids) > 0) {
       message("\t=>", length(solid_ids), " solid circRNAs detected")
       bed_dt2 = bed_dt2[id %in% solid_ids]
       bed_dt2$id = NULL
       rv = bed_dt2[, .(tool = paste(tool, collapse = ","),
-                  count = mean(count, na.rm=TRUE)), 
-                  by = .(chr, start, end, strand, gene)]  # Get average count
+                       count = mean(count, na.rm=TRUE)),
+                   by = .(chr, start, end, strand, gene)]
       rv$sample = sample
       fwrite(x = rv, file = file.path(OutDir, paste0(sample, ".aggr.txt")), sep = "\t")
     } else {
@@ -177,7 +165,6 @@ aggr_circRNA_beds = function(sample, methods) {
 }
 
 # Processing in batch
-
 message("Reading, joining & annotating circRNAs...")
 
 file_to_all = file.path(OutDir, paste0(basename(InDir), ".circRNA_all.txt"))
@@ -185,16 +172,9 @@ if (file.exists(file_to_all)) invisible(file.remove(file_to_all))
 
 invisible(
   parallel::mclapply(sample_ids, function(sample) {
-  message("\thandling ", sample)
-  aggr_circRNA_beds(sample, methods)
-}, mc.cores = min(parallel::detectCores(), 20L, length(sample_ids)))
+    message("\thandling ", sample)
+    aggr_circRNA_beds(sample, methods)
+  }, mc.cores = min(parallel::detectCores(), 20L, length(sample_ids)))
 )
 
-# for (sample in sample_ids) {
-#   message("\thandling ", sample)
-#   aggr_circRNA_beds(sample, methods)
-# }
-
 message("Done. Please check result *.aggr.txt in ", OutDir)
-
-

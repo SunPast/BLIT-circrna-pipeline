@@ -19,11 +19,21 @@ find . -type f \( -name "*_1.fastq.gz" -o -name "*_R1.fastq.gz" \) | while read 
     if [[ "$r1" == *_1.fastq.gz ]]; then
         r2="${r1/_1.fastq.gz/_2.fastq.gz}"
         prefix=$(basename "$r1" _1.fastq.gz)
+        output_r1="${prefix}_1.fastq.gz"
+        output_r2="${prefix}_2.fastq.gz"
     elif [[ "$r1" == *_R1.fastq.gz ]]; then
         r2="${r1/_R1.fastq.gz/_R2.fastq.gz}"
         prefix=$(basename "$r1" _R1.fastq.gz)
+        output_r1="${prefix}_R1.fastq.gz"
+        output_r2="${prefix}_R2.fastq.gz"
     else
         echo "Skipping unexpected file: $r1"
+        continue
+    fi
+
+    # Check if output already exists
+    if [[ -f "$OUT_DIR/$output_r1" ]] && [[ -f "$OUT_DIR/$output_r2" ]]; then
+        echo "Output already exists for $prefix, skipping..."
         continue
     fi
 
