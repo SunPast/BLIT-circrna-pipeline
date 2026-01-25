@@ -13,7 +13,6 @@ source ${config}
 ENV_PATH="/data/home/dingjia/.local/share/R/blit/appmamba/envs/CIRIquant"
 MICROMAMBA="/data/home/dingjia/.local/bin/micromamba"
 
-#========================================================
 outdir2=${oudir}/${prefix}.CIRI
 mkdir -p ${outdir2}
 cd ${outdir2}

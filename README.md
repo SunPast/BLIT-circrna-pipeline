@@ -1,146 +1,158 @@
-# CircRNA Identification and Integration Pipeline
+# CircRNA Identification and Integration Pipeline (BLIT Version)
 
-The pipeline provides an easy and reproducible way to detect circRNA from pair-end FASTQ files using four methods: CIRIquant, Circexplorer2, find_circ, and circRNA_finder.
+## Purpose
 
-> The scripts and logs for handling TCCIA cohorts are available under the [run_batch_from_qc](https://github.com/ShixiangWang/circrna-pipeline/tree/main/run_batch_from_qc) path.
+This project is a **BLIT-integrated refactor** of the [original circRNA pipeline](https://github.com/OncoHarmony-Network/circrna-pipeline). The biological workflow is unchanged, but:
 
-## Step 1. Install the required conda environment
+- All conda/mamba environment creation is now handled by BLIT (`appmamba`)
+- All shell orchestration is replaced with BLIT functions like `exec()` and `cmd_condaenv()`
+- The pipeline demonstrates how BLIT can manage a real multi-tool bioinformatics workflow
 
-1. (Optional) Set an independent linux account `circrna` for deploying and running circRNA identification pipeline.
-2. Install [miniconda3](https://docs.conda.io/en/latest/miniconda.html) to default path, i.e., `~/miniconda3`.
-When using recommended setting above, conda should be available at `/home/circrna/miniconda3`.
-3. Install [mamba](https://mamba.readthedocs.io/en/latest/installation.html) to `base` env with `conda install -n base --override-channels -c conda-forge mamba 'python_abi=*=*cp*'`.
-4. Install [just](https://just.systems/) with `curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to ~/bin`. Please add `~/bin` here to your `$PATH`.
-You can change the `~/bin` to anywhere, but you need to make the `just` available when you enter the terminal.
-5. Install [rush](https://github.com/shenwei356/rush) and add its path to `$PATH`, similar
-to `just`.
-6. (Optional) Set registry of conda and pypi (pip) if necessary. For example, if you are in China, I recommend [https://mirrors.tuna.tsinghua.edu.cn/help/anaconda/](https://mirrors.tuna.tsinghua.edu.cn/help/anaconda/)
-& [https://mirrors.tuna.tsinghua.edu.cn/help/pypi/](https://mirrors.tuna.tsinghua.edu.cn/help/pypi/). 
-7. Now, clone this repo (`git clone git@42.192.87.178:coco/circrna-pipeline.git`).
-8. Install the conda environments one by one.
+The pipeline detects circRNAs from paired-end FASTQ files using four methods:
 
-    ```sh
-    cd circrna-pipeline
-    cd CIRIquant
-    just install
-    cd ../FindCirc
-    just install
-    cd ../Circexplorer2
-    just install
-    cd ../circRNA_finder
-    just install
-    ```
+- CIRIquant
+- Circexplorer2
+- find_circ
+- circRNA_finder
 
-Please make sure all the conda environments have been created with required softwares.
+Results from all methods are aggregated using an ensemble approach.
 
-```sh
-$ conda env list
-# conda environments:
-#
-base                  *  /home/circrna/miniconda3
-CIRIquant                /home/circrna/miniconda3/envs/CIRIquant
-Circexplorer2            /home/circrna/miniconda3/envs/Circexplorer2
-FindCirc                 /home/circrna/miniconda3/envs/FindCirc
-circRNA_finder           /home/circrna/miniconda3/envs/circRNA_finder
-```
+------
 
-## Step 2. Prepare align index, reference file and config file
+## ⚠️ Path Localization Required
 
-For running the pipeline, many files are required.
+This repository contains hard-coded paths from the author's machine. Before running, modify the following paths according to your local environment:
 
-1. Prepare genome fasta file and gtf file. We use `GRCh38.primary_assembly.genome.fa` and `gencode.v34.annotation.gtf`.
-1. For Circexplorer2, you need to download the reference file `hg38_ref_all.txt` (should be corresponding to your reference genome) with `fetch_ucsc.py` script from the `Circexplorer2` environment.
-1. Prepare align index, [config_zhou.sh](config_zhou.sh) has recorded the commands.
-Please note, you need to activate corresponding environment before run index commands.
+| File                               | PATHs to Modify                                            |
+| :--------------------------------- | :--------------------------------------------------------- |
+| `prepare/prepare_fastp.sh`         | Fastq input/output paths                                   |
+| `prepare/prepare_index.sh`         | Genome, index, and environment paths                       |
+| `Circexplorer2/Circexplorer2.sh`   | Environment paths                                          |
+| `circRNA_finder/circRNA_finder.sh` | Environment paths                                          |
+| `CIRIquant/CIRIquant.sh`           | Environment paths                                          |
+| `CIRIquant/hg38.yml`               | Reference paths and tool PATHs in environments             |
+| `FindCirc/FindCirc.sh`             | Environment paths                                          |
+| `run_call.R`                       | sample list, fastp-cleaned files, output path, config file |
+| `run_aggr.R`                       | pipeline directory, sample list, output path               |
 
-    For example, to prepare index for CIRIquant.
-    ```sh
-    source activate CIRIquant
-    bwa index -a bwtsw -p /path/to/GRCh38.primary_assembly.genome.fa /path/to/GRCh38.primary_assembly.genome.fa
-    hisat2-build -p 40 /path/to/GRCh38.primary_assembly.genome.fa /path/to/GRCh38.primary_assembly.genome.fa
-    ```
-1. For CIRIquant, a `yml` file is required to set the paths of softwares and files, e.g., [hg38.yml](CIRIquant/hg38.yml). You need to modify the contents to fit your setting (You can also create another `yml` file).
-1. Set a `config.sh` file, it sets all required setting with SHELL variables, [config_zhou.sh](config_zhou.sh) is a good reference (Of cource, you can modify its contents to fit your needs).
+All appmamba environments are created at: `~/.local/share/R/blit/appmamba/envs/`
 
-## Step 3. Preprocess pair-end fastq files
+------
 
-You need to preprocess your pair-end fastq files (QC, cut adapters, etc.). [fastp](https://github.com/OpenGene/fastp) is a one-stop solution for this.
+## Step 1. Install Required Environments
 
-Currently, we only support file names with the postfix `_1.fastq.gz` and `_2.fastq.gz`.
-Please make sure you output your processed fastq files in such a format.
-
-## Step 4. Test and run pipeline
-
-Create a shell script with following settings and commands.
-
-```sh
-fqfile=./sample_list.txt
-indir=/path/include/paired/fastq/files
-oudir=/path/to/output
-nthreads=20
-config=/path/to/your/config.sh
-
-common/ll_fq.py ${indir} --output ${fqfile}
-
-nohup bash caller.sh ${fqfile} ${indir} ${oudir} ${nthreads} ${config} &> run.log &
-```
-
-> The script has to be executed in conda `base` environment (or `python3` is installed).
-> If you have prepared the `sample_list.txt` file by your own.
-> You can comment the `common/ll_fq.py` row, and you can run the script
-> in bash without any other requirement (e.g., no python3 is required from the `base` environment).
-
-The directory [run_batch](run_batch/) have examples for running our TCCIA cohorts.
-
-I recommend testing the pipeline with 4 samples. If it goes well, run all the data files you have. The pipeline will skip samples with result files already generated.
-
-After getting the detection results from 4 methods, you can use the ensemble approach (code under [aggr](aggr/) to get final results.
-
-[An example](https://github.com/ShixiangWang/circrna-pipeline/blob/main/run_batch_from_qc/PHS003316/PHS003316_aggr.sh) is given as:
+Run in R:
 
 ```
-workdir=/home/zhou/raid/IO_RNA/circRNA/PHS003316
-
-bash -c "../../aggr/aggr_beds.R ${workdir} ${workdir}/aggr && ../../aggr/aggr_dataset.R ${workdir}/aggr ${workdir}/aggr ./PHS003316.txt" &> PHS003316_aggr.log
+source("init_env.R")
 ```
 
-## Output
+This reproduces the original justfile installations using BLIT.
 
-The output directory contains result files with names combined from sample names and
-methods.
+Environments created:
 
-```sh
-$ ls *.bed
-GO28753_ngs_rna_targrna_rnaaccess_EA_0f0fda909f_20150820.circexplorer2.bed
-GO28753_ngs_rna_targrna_rnaaccess_EA_0f0fda909f_20150820.circRNA_finder.bed
-GO28753_ngs_rna_targrna_rnaaccess_EA_0f0fda909f_20150820.CIRI.bed
-GO28753_ngs_rna_targrna_rnaaccess_EA_0f0fda909f_20150820.find_circ.bed
+| Environment    | Software                                                     |
+| :------------- | :----------------------------------------------------------- |
+| fastp          | fastp                                                        |
+| FindCirc       | find_circ=1.2, bowtie2, samtools                             |
+| Circexplorer2  | python=3.7, bwa, pip, circexplorer2                          |
+| CIRIquant      | python=2.7, bwa=0.7.17, hisat2=2.2.0, stringtie=2.1.1, samtools=1.10, CIRIquant=1.1.2 |
+| circRNA_finder | circrna_finder, star, samtools                               |
+| aggr           | r-base=4.2, r-data.table, radian                             |
+
+------
+
+## Step 2. Prepare References and Configuration
+
+1. **Prepare genome files:**
+
+   - Genome FASTA (e.g., `GRCh38.primary_assembly.genome.fa`)
+   - Annotation GTF (e.g., `gencode.v34.annotation.gtf`)
+
+2. **For Circexplorer2:**
+   Download `hg38_ref_all.txt` using `fetch_ucsc.py` inside its environment.
+
+3. **Generate alignment indexes:**
+
+   ```bash
+   bash prepare/prepare_index.sh
+   ```
+
+4. **Configure paths in:**
+
+   - `config.sh` - Main configuration
+   - `CIRIquant/hg38.yml` - CIRIquant-specific settings
+
+------
+
+## Step 3. Preprocess FASTQ Files
+
+Run quality control and adapter trimming with fastp:
+
+```bash
+bash prepare/prepare_fastp.sh
 ```
 
-The result file usually contains the postion and count value of circRNAs.
+FASTQ naming convention:
 
-```sh
-$ head GO28753_ngs_rna_targrna_rnaaccess_EA_0f0fda909f_20150820.circexplorer2.bed
-chr3    9750944 9751949 +       31
-chr3    11331339        11348035        +       16
-chr3    12489783        12489989        +       19
-chr3    12496517        12503784        +       1
-chr3    15016151        15034809        +       11
-chr3    15210801        15212212        +       12
-chr3    15232518        15233973        +       1
-chr3    15563357        15573242        -       3
-chr3    17372074        17384015        -       2
-chr3    18415110        18420991        -       9
+```
+*_1.fastq.gz  # Read 1
+*_2.fastq.gz  # Read 2
 ```
 
-## Reference
+------
 
-We would like to thank all contributors of the following two projects. Our pipeline
-was inspired by the two works and could not be built without them.
+## Step 4. Run circRNA Detection
 
-- https://github.com/Yelab2020/ICBcircSig
-- https://github.com/nf-core/circrna
+Run in R:
 
-## Copyright
+```R
+source("run_call.R")
+```
 
-&copy; 2023 - OncoHarmony Network by Shixiang Wang, Yi Xiong, and Jian-Guo Zhou.
+This script:
+
+1. Generates sample list from processed FASTQ files
+2. Runs all four circRNA callers sequentially
+3. Each tool runs in its BLIT-managed environment
+
+Output per sample:
+
+```
+sample.CIRI.bed
+sample.circexplorer2.bed
+sample.find_circ.bed
+sample.circRNA_finder.bed
+```
+
+------
+
+## Step 5. Aggregate Results
+
+Run in R:
+
+```R
+source("run_aggr.R")
+```
+
+This step:
+
+1. Aggregates results from all four callers
+2. Annotates circRNAs using GTF
+3. Produces final integrated dataset
+
+------
+
+## Important Notes
+
+1. **CIRIquant Installation:** This legacy tool only supports Python 2. It is installed via `pip install CIRIquant==1.1.2` inside a Python 2 environment.
+2. **Environment Location:** All conda environments are installed at `~/.local/share/R/blit/appmamba/envs/`
+3. **Resource Requirements:** Ensure sufficient disk space (approximately 20GB for environments and indexes)
+
+------
+
+## References
+
+- Original pipeline: [OncoHarmony-Network/circrna-pipeline](https://github.com/OncoHarmony-Network/circrna-pipeline)
+- Pipeline inspiration: [Yelab2020/ICBcircSig](https://github.com/Yelab2020/ICBcircSig), [nf-core/circrna](https://github.com/nf-core/circrna)
+- BLIT: [WangLabCSU/BLIT](https://github.com/WangLabCSU/BLIT)

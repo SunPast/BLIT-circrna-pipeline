@@ -4,21 +4,21 @@ set -euo pipefail
 REF_BASE=/data/home/dingjia/pipeline/
 THREADS=20
 
+LOG_FILE="${REF_BASE}/star_index_build.log"
+MICROMAMBA="/data/home/dingjia/.local/bin/micromamba"
+
+CIRCRNA_FINDER_ENV="/data/home/dingjia/.local/share/R/blit/appmamba/envs/circRNA_finder"
+CIRIQUANT_ENV="/data/home/dingjia/.local/share/R/blit/appmamba/envs/CIRIquant"
+FIND_CIRC_ENV="/data/home/dingjia/.local/share/R/blit/appmamba/envs/FindCirc"
+
 FASTA=${REF_BASE}/GRCh38.primary_assembly.genome.fa
 GTF=${REF_BASE}/gencode.v34.annotation.gtf
 
 STAR_INDEX=${REF_BASE}/STAR_index_2.7.10b
 BT2_PREFIX=${REF_BASE}/GRCh38.primary_assembly
 
-LOG_FILE="${REF_BASE}/star_index_build.log"
-MICROMAMBA="/data/home/dingjia/.local/bin/micromamba"
-
 echo "===> Genome index preparation"
 echo "Log file: $LOG_FILE"
-
-CIRCRNA_FINDER_ENV="/data/home/dingjia/.local/share/R/blit/appmamba/envs/circRNA_finder"
-CIRIQUANT_ENV="/data/home/dingjia/.local/share/R/blit/appmamba/envs/CIRIquant"
-FIND_CIRC_ENV="/data/home/dingjia/.local/share/R/blit/appmamba/envs/FindCirc"
 
 # bowtie2 (find_circ)
 if [ ! -f "${BT2_PREFIX}.1.bt2" ]; then

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail   # ✅ 失败即停
+set -euo pipefail
 
 # 0. Config
 sample=$1
@@ -14,7 +14,6 @@ source ${config}
 ENV_PATH="/data/home/dingjia/.local/share/R/blit/appmamba/envs/FindCirc"
 MICROMAMBA="/data/home/dingjia/.local/bin/micromamba"
 
-#========================================================
 outdir2=${oudir}/${prefix}.find_circ
 mkdir -p ${outdir2}
 cd ${outdir2}

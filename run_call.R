@@ -5,14 +5,11 @@ library(blit)
 # -----------------------------
 pipeline_dir <- "/data/home/dingjia/BLIT-pipeline"
 
-fqfile   <- file.path(pipeline_dir, "run_batch_from_qc/PHS003316/PHS003316.txt")
+fqfile   <- file.path(pipeline_dir, "PHS003316.txt")
 indir    <- "/data/home/dingjia/blit_fastp"
 oudir    <- "/data/home/dingjia/blit_test/RNA_phs003316/result"
 config   <- file.path(pipeline_dir, "config.sh")
 
-# -----------------------------
-# Threads per tool
-# -----------------------------
 nthreads_prog <- 16
 
 # -----------------------------
@@ -20,14 +17,12 @@ nthreads_prog <- 16
 # -----------------------------
 cat("[Step 0] Prepare reference & tools...\n")
 
-# Indexes for CIRIquant
 sink(file.path(oudir, "prepare_index.log"), split = TRUE)
 exec("bash", file.path(pipeline_dir, "prepare/prepare_index.sh")) |>
   cmd_condaenv("CIRIquant") |>
   cmd_run()
 sink()
 
-# fastp: only if not exist
 if (!dir.exists(indir)) {
   sink(file.path(oudir, "prepare_fastp.log"), split = TRUE)
   exec("bash", file.path(pipeline_dir, "prepare/prepare_fastp.sh")) |>
@@ -99,4 +94,4 @@ for (sample in samples) {
 
 cat("All circRNA tools completed (sequential mode)!\n")
 cat("Now you can run the aggregation step manually.\n")
-cat("Run: Rscript run_aggr.R\n")
+cat("please run: run_aggr.R\n")

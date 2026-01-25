@@ -106,3 +106,20 @@ appmamba(
 )
 
 cat("All environments installed (faithful to just).\n")
+
+# =======================
+# aggr environment (from just install)
+# just:
+# mamba install -c conda-forge -y r-base=4.2 r-data.table radian
+# =======================
+
+appmamba(
+  "create", "--yes",
+  "-p", file.path(BASE, "aggr"),
+  "-c", TUNA_CF,
+  "r-base=4.2",
+  "r-data.table",
+  "radian"
+)
+
+cat("aggr environment installed (R 4.2 + data.table + radian)\n")
