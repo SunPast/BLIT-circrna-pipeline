@@ -10,25 +10,21 @@ indir    <- "/data/home/dingjia/blit_fastp"
 oudir    <- "/data/home/dingjia/blit_test/RNA_phs003316/result"
 config   <- file.path(pipeline_dir, "config.sh")
 
-nthreads_prog <- 16
+nthreads_prog <- 48
 
 # -----------------------------
 # Step 0. Prepare
 # -----------------------------
 cat("[Step 0] Prepare reference & tools...\n")
 
-sink(file.path(oudir, "prepare_index.log"), split = TRUE)
 exec("bash", file.path(pipeline_dir, "prepare/prepare_index.sh")) |>
   cmd_condaenv("CIRIquant") |>
   cmd_run()
-sink()
 
 if (!dir.exists(indir)) {
-  sink(file.path(oudir, "prepare_fastp.log"), split = TRUE)
   exec("bash", file.path(pipeline_dir, "prepare/prepare_fastp.sh")) |>
     cmd_condaenv("fastp") |>
     cmd_run()
-  sink()
 } else {
   cat("fastp output directory exists, skipping fastp prepare.\n")
 }
@@ -37,7 +33,6 @@ if (!dir.exists(indir)) {
 # Step 1. Generate sample list
 # -----------------------------
 cat("[Step 1] Generate sample list...\n")
-sink(file.path(oudir, "generate_sample_list.log"), split = TRUE)
 exec(
   "python",
   file.path(pipeline_dir, "common/ll_fq.py"),
@@ -45,7 +40,6 @@ exec(
   "--output", fqfile
 ) |>
   cmd_run()
-sink()
 
 samples <- readLines(fqfile)
 cat("Total samples:", length(samples), "\n\n")
@@ -72,7 +66,6 @@ for (sample in samples) {
     cat("----> Running", tool_name, "for", sample, "\n")
 
     log_file <- file.path(oudir, paste0(sample, ".", tool_name, ".log"))
-    sink(log_file, split = TRUE)
 
     exec(
       "bash",
@@ -86,7 +79,6 @@ for (sample in samples) {
       cmd_condaenv(tool$env) |>
       cmd_run()
 
-    sink()
   }
 
   cat("===> Sample finished:", sample, "\n\n")
