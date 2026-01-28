@@ -1,21 +1,38 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REF_BASE=/data/home/dingjia/pipeline/
-THREADS=20
+REF_BASE=${REF_BASE}
+THREADS=${THREADS}
 
 LOG_FILE="${REF_BASE}/star_index_build.log"
-MICROMAMBA="/data/home/dingjia/.local/bin/micromamba"
+MICROMAMBA=${MICROMAMBA}
 
-CIRCRNA_FINDER_ENV="/data/home/dingjia/.local/share/R/blit/appmamba/envs/circRNA_finder"
-CIRIQUANT_ENV="/data/home/dingjia/.local/share/R/blit/appmamba/envs/CIRIquant"
-FIND_CIRC_ENV="/data/home/dingjia/.local/share/R/blit/appmamba/envs/FindCirc"
-
+CIRCRNA_FINDER_ENV=${ENV_circRNA_finder}
+CIRIQUANT_ENV=${ENV_CIRIquant}
+FIND_CIRC_ENV=${ENV_FindCirc}
 FASTA=${REF_BASE}/GRCh38.primary_assembly.genome.fa
 GTF=${REF_BASE}/gencode.v34.annotation.gtf
 
 STAR_INDEX=${REF_BASE}/STAR_index_2.7.10b
 BT2_PREFIX=${REF_BASE}/GRCh38.primary_assembly
+
+ANN_REF=${REF_BASE}/hg38_ref_all.txt
+GENOME=${GENOME:-hg38}
+
+if [ ! -f "${ANN_REF}" ]; then
+  echo "===> Building Circexplorer2 refFlat annotation"
+
+  ${MICROMAMBA} run -p "${ENV_CE2}" \
+    fetch_ucsc.py ${GENOME} ref ${ANN_REF}
+  if [ ! -s "${ANN_REF}" ]; then
+    echo "✗ Circexplorer2 annotation generation failed"
+    exit 1
+  else
+    echo "✓ Circexplorer2 annotation created: ${ANN_REF}"
+  fi
+else
+  echo "===> Circexplorer2 annotation exists, skipping..."
+fi
 
 echo "===> Genome index preparation"
 echo "Log file: $LOG_FILE"

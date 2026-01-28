@@ -11,8 +11,8 @@ prefix=${sample}
 config=$5
 source ${config}
 
-ENV_PATH="/data/home/dingjia/.local/share/R/blit/appmamba/envs/FindCirc"
-MICROMAMBA="/data/home/dingjia/.local/bin/micromamba"
+ENV_PATH=${ENV_FindCirc}
+MICROMAMBA=${MICROMAMBA}
 
 outdir2=${oudir}/${prefix}.find_circ
 mkdir -p ${outdir2}

@@ -1,5 +1,0 @@
-all:
-    echo "Please run just install in base envir"
-install:
-    mamba install -c conda-forge -y r-base=4.2 r-data.table radian
-

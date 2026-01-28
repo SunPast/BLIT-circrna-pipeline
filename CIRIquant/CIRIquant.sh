@@ -10,8 +10,8 @@ prefix=${sample}
 config=$5
 source ${config}
 
-ENV_PATH="/data/home/dingjia/.local/share/R/blit/appmamba/envs/CIRIquant"
-MICROMAMBA="/data/home/dingjia/.local/bin/micromamba"
+ENV_PATH=${ENV_CIRIquant}
+MICROMAMBA=${MICROMAMBA}
 
 outdir2=${oudir}/${prefix}.CIRI
 mkdir -p ${outdir2}

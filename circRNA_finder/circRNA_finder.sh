@@ -10,8 +10,8 @@ prefix=${sample}
 config=$5
 source ${config}
 
-ENV_PATH="/data/home/dingjia/.local/share/R/blit/appmamba/envs/circRNA_finder"
-MICROMAMBA="/data/home/dingjia/.local/bin/micromamba"
+ENV_PATH=${ENV_circRNA_finder}
+MICROMAMBA=${MICROMAMBA}
 
 # NOTE:
 # ncpu is controlled by the R pipeline (default = 4),

@@ -1,8 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-RAW_DIR="/data/data2/IO_RNA/raw/PHS003316"
-OUT_DIR="/data/home/dingjia/blit_fastp"
+RAW_DIR=${RAW_FASTQ_DIR}
+OUT_DIR=${FASTP_DIR}
 
 mkdir -p "$OUT_DIR"
 

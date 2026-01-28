@@ -2,119 +2,88 @@
 
 ## Purpose
 
-This project is a **BLIT-integrated refactor** of the [original circRNA pipeline](https://github.com/OncoHarmony-Network/circrna-pipeline). The biological workflow is unchanged, but:
+This project is a **BLIT-integrated refactor** of the original circRNA pipeline:   https://github.com/OncoHarmony-Network/circrna-pipeline
 
-- All conda/mamba environment creation is now handled by BLIT (`appmamba`)
-- All shell orchestration is replaced with BLIT functions like `exec()` and `cmd_condaenv()`
-- The pipeline demonstrates how BLIT can manage a real multi-tool bioinformatics workflow
+The **biological workflow is unchanged**, but the infrastructure has been modernized:
+
+- All conda/mamba environment creation is handled by **BLIT (`appmamba`)**
+- All shell orchestration is replaced with **BLIT functions** (`exec()`, `cmd_condaenv()`)
+- The pipeline demonstrates how **BLIT manages a real multi-tool bioinformatics workflow**
 
 The pipeline detects circRNAs from paired-end FASTQ files using four methods:
 
-- CIRIquant
-- Circexplorer2
-- find_circ
-- circRNA_finder
+- **CIRIquant**
+- **Circexplorer2**
+- **find_circ**
+- **circRNA_finder**
 
-Results from all methods are aggregated using an ensemble approach.
-
-------
-
-## ⚠️ Path Localization Required
-
-This repository contains hard-coded paths from the author's machine. Before running, modify the following paths according to your local environment:
-
-| File                               | PATHs to Modify                                            |
-| :--------------------------------- | :--------------------------------------------------------- |
-| `prepare/prepare_fastp.sh`         | Fastq input/output paths                                   |
-| `prepare/prepare_index.sh`         | Genome, index, and environment paths                       |
-| `Circexplorer2/Circexplorer2.sh`   | Environment paths                                          |
-| `circRNA_finder/circRNA_finder.sh` | Environment paths                                          |
-| `CIRIquant/CIRIquant.sh`           | Environment paths                                          |
-| `CIRIquant/hg38.yml`               | Reference paths and tool PATHs in environments             |
-| `FindCirc/FindCirc.sh`             | Environment paths                                          |
-| `run_call.R`                       | sample list, fastp-cleaned files, output path, config file |
-| `run_aggr.R`                       | pipeline directory, sample list, output path               |
-
-All appmamba environments are created at: `~/.local/share/R/blit/appmamba/envs/`
+Results from all methods are integrated using an ensemble aggregation strategy.
 
 ------
 
-## Step 1. Install Required Environments
+## Step 1. Prepare References
 
-Run in R:
+You have to prepare genome reference files:
 
-```
+- Genome FASTA (e.g. `GRCh38.primary_assembly.genome.fa`)
+- Gene annotation GTF (e.g. `gencode.v34.annotation.gtf`)
+
+------
+
+## Step 2. Install Required Environments
+
+Install tool environments. Run in R:
+
+```r
 source("init_env.R")
 ```
 
-This reproduces the original justfile installations using BLIT.
+This reproduces the original pipeline's `justfile` installations using BLIT.
 
-Environments created:
-
-| Environment    | Software                                                     |
-| :------------- | :----------------------------------------------------------- |
-| fastp          | fastp                                                        |
-| FindCirc       | find_circ=1.2, bowtie2, samtools                             |
-| Circexplorer2  | python=3.7, bwa, pip, circexplorer2                          |
-| CIRIquant      | python=2.7, bwa=0.7.17, hisat2=2.2.0, stringtie=2.1.1, samtools=1.10, CIRIquant=1.1.2 |
-| circRNA_finder | circrna_finder, star, samtools                               |
-| aggr           | r-base=4.2, r-data.table, radian                             |
+|  Environment   |                           Software                           |
+| :------------: | :----------------------------------------------------------: |
+|     fastp      |                            fastp                             |
+|    FindCirc    |               find_circ=1.2, bowtie2, samtools               |
+| Circexplorer2  |             python=3.7, bwa, pip, circexplorer2              |
+|   CIRIquant    | python=2.7, bwa=0.7.17, hisat2=2.2.0, stringtie=2.1.1, samtools=1.10, CIRIquant=1.1.2 |
+| circRNA_finder |                circrna_finder, star, samtools                |
+|      aggr      |               r-base=4.2, r-data.table, radian               |
 
 ------
 
-## Step 2. Prepare References and Configuration
+## Step 3. ⚠️ Configure the Pipeline
 
-1. **Prepare genome files:**
+This pipeline is **not plug-and-play** until you configure paths.
 
-   - Genome FASTA (e.g., `GRCh38.primary_assembly.genome.fa`)
-   - Annotation GTF (e.g., `gencode.v34.annotation.gtf`)
+Hence you need to edit `input.yml`.
 
-2. **For Circexplorer2:**
-   Download `hg38_ref_all.txt` using `fetch_ucsc.py` inside its environment.
+This file controls:
 
-3. **Generate alignment indexes:**
+- FASTQ input location
+- Output directory
+- Reference paths
+- CPU threads
+- Environment locations
 
-   ```bash
-   bash prepare/prepare_index.sh
-   ```
-
-4. **Configure paths in:**
-
-   - `config.sh` - Main configuration
-   - `CIRIquant/hg38.yml` - CIRIquant-specific settings
+You do **NOT** need to edit scripts directly.
 
 ------
 
-## Step 3. Preprocess FASTQ Files
-
-Run quality control and adapter trimming with fastp:
-
-```bash
-bash prepare/prepare_fastp.sh
-```
-
-FASTQ naming convention:
-
-```
-*_1.fastq.gz  # Read 1
-*_2.fastq.gz  # Read 2
-```
-
-------
-
-## Step 4. Run circRNA Detection
+## Step 4. Preprocessing & Run circRNA Detection
 
 Run in R:
 
-```R
+```r
 source("run_call.R")
 ```
 
 This script:
 
-1. Generates sample list from processed FASTQ files
-2. Runs all four circRNA callers sequentially
-3. Each tool runs in its BLIT-managed environment
+1. Generates references and indexes if their directory has not been found
+2. Processes fastp for raw files if fastp output directory has not been found
+3. Generates the sample list automatically if it has not been found
+4. Runs all four circRNA callers sequentially, and each tool executes inside its BLIT-managed environment
+5. Logs are written to `RUN_CALL.log`
 
 Output per sample:
 
@@ -129,25 +98,48 @@ sample.circRNA_finder.bed
 
 ## Step 5. Aggregate Results
 
-Run in R:
+Run:
 
-```R
+```r
 source("run_aggr.R")
 ```
 
 This step:
 
-1. Aggregates results from all four callers
-2. Annotates circRNAs using GTF
-3. Produces final integrated dataset
+1. Checks that all tools completed
+2. Merges circRNA predictions
+3. Annotates circRNAs using GTF
+4. Produces final integrated dataset
+
+5. Logs are written to `RUN_AGGR.log`.
 
 ------
 
-## Important Notes
+## Notes
 
-1. **CIRIquant Installation:** This legacy tool only supports Python 2. It is installed via `pip install CIRIquant==1.1.2` inside a Python 2 environment.
-2. **Environment Location:** All conda environments are installed at `~/.local/share/R/blit/appmamba/envs/`
-3. **Resource Requirements:** Ensure sufficient disk space (approximately 20GB for environments and indexes)
+1. CIRIquant
+
+   CIRIquant only supports **Python 2**.  We installed it via:
+
+   ```
+   pip install CIRIquant==1.1.2
+   ```
+
+2. Thread Control
+
+   Threads are controlled in:
+
+   ```
+   input.yml → threads:
+   ```
+
+3. PATH to appmamba
+
+   All conda environments are created under:
+
+   ```
+   ~/.local/share/R/blit/appmamba/envs/
+   ```
 
 ------
 

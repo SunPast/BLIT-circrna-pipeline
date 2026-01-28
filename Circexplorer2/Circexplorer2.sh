@@ -11,8 +11,8 @@ prefix=${sample}
 config=$5
 source ${config}
 
-ENV_PATH="/data/home/dingjia/.local/share/R/blit/appmamba/envs/Circexplorer2"
-MICROMAMBA="/data/home/dingjia/.local/bin/micromamba"
+ENV_PATH=${ENV_CE2}
+MICROMAMBA=${MICROMAMBA}
 
 outdir2=${oudir}/${prefix}.circexplorer2
 mkdir -p ${outdir2}

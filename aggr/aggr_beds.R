@@ -1,6 +1,14 @@
 #!/usr/bin/env Rscript
 
 library(data.table)
+library(yaml)
+
+cfg <- yaml::read_yaml("input.yml")
+
+Sys.setenv(
+  GTF_PATH = cfg$gtf,
+  COMMON_PY = file.path(cfg$pipeline_dir, "common/common.py")
+)
 
 args = commandArgs(trailingOnly = TRUE)
 stopifnot(length(args) > 0)
@@ -12,8 +20,8 @@ if (length(args) == 1) {
 }
 
 # Use environment variables or default paths
-GTF = Sys.getenv("GTF_PATH", "/data/home/dingjia/pipeline/gencode.v34.annotation.gtf")
-commonPy = Sys.getenv("COMMON_PY", "/data/home/dingjia/BLIT-pipeline/common/common.py")
+GTF = Sys.getenv("GTF_PATH")
+commonPy = Sys.getenv("COMMON_PY")
 
 stopifnot(file.exists(commonPy), file.exists(GTF), dir.exists(InDir))
 if (!dir.exists(OutDir)) {

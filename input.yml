@@ -1,0 +1,64 @@
+# ================================
+# BLIT circRNA Pipeline Config
+# 修改此文件即可实现pipeline本地化
+# ================================
+
+# 使用的CPU线程数
+threads: 48
+
+data:
+
+  # 原始FASTQ文件所在目录
+  raw_fastq_dir: /data/data2/IO_RNA/raw/PHS003316
+
+  # fastp质控后输出目录（如果不存在会自动运行fastp）
+  fastp_dir: /data/home/dingjia/blit_fastp
+
+  # BLIT pipeline 主程序目录（代码仓库位置）
+  pipeline_dir: /data/home/dingjia/BLIT-pipeline
+
+  # 样本列表文件（每行一个sample名。可注释，脚本可自动生成）
+  sample_list: /data/home/dingjia/BLIT-pipeline/PHS003316.txt
+
+  # 所有分析结果输出目录（主输出目录）
+  result_dir: /data/home/dingjia/blit_test/RNA_phs003316/result
+
+
+reference:
+
+  # 参考文件所在总目录
+  base_dir: /data/home/dingjia/pipeline
+
+  # 参考基因组fasta
+  fasta: /data/home/dingjia/pipeline/GRCh38.primary_assembly.genome.fa
+
+  # 基因注释GTF文件
+  gtf: /data/home/dingjia/pipeline/gencode.v34.annotation.gtf
+
+  # Circexplorer2注释参考文件（可注释，pipeline可自动生成）
+  ann_ref: /data/home/dingjia/pipeline/hg38_ref_all.txt
+  genome: hg38
+
+  # STAR比对索引目录
+  star_index: /data/home/dingjia/pipeline/STAR_index_2.7.10b
+
+  # Bowtie2索引（不要带 .bt2 后缀）
+  bt2_INDEX: /data/home/dingjia/pipeline/GRCh38.primary_assembly
+
+  # CIRIquant使用的参考配置文件（可注释，pipeline可自动生成）
+  CIRI_config: /data/home/dingjia/pipeline/hg38.yml
+
+
+# ===========================================
+# 环境路径（务必先跑一下 init_env.R，安装后填写）
+# ===========================================
+environments:
+
+  # micromamba可执行文件路径
+  micromamba: /data/home/dingjia/.local/bin/micromamba
+
+  # 各个工具的conda环境路径
+  env_CIRIquant: /data/home/dingjia/.local/share/R/blit/appmamba/envs/CIRIquant
+  env_FindCirc: /data/home/dingjia/.local/share/R/blit/appmamba/envs/FindCirc
+  env_CE2: /data/home/dingjia/.local/share/R/blit/appmamba/envs/Circexplorer2
+  env_circRNA_finder: /data/home/dingjia/.local/share/R/blit/appmamba/envs/circRNA_finder

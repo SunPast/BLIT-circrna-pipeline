@@ -1,7 +1,10 @@
 library(blit)
+library(yaml)
 
-pipeline_dir <- "/data/home/dingjia/BLIT-pipeline"
-outdir        <- "/data/home/dingjia/blit_test/RNA_phs003316/result"
+cfg <- yaml::read_yaml("input.yml")
+
+pipeline_dir  <- cfg$data$pipeline_dir
+outdir        <- cfg$data$result_dir
 fqfile       <- file.path(pipeline_dir, "PHS003316.txt")
 
 aggr_dir <- file.path(outdir, "aggr")
@@ -10,10 +13,36 @@ dir.create(aggr_dir, showWarnings = FALSE, recursive = TRUE)
 sample_anno <- fqfile
 
 Sys.setenv(
-  GTF_PATH  = "/data/home/dingjia/pipeline/gencode.v34.annotation.gtf",
-  COMMON_PY = "/data/home/dingjia/BLIT-pipeline/common/common.py"
+  GTF_PATH  = cfg$reference$gtf,
+  COMMON_PY = file.path(pipeline_dir, "common/common.py")
 )
 
+# ----- log -----
+run_aggr_log <- file.path(outdir, "RUN_AGGR.log")
+dir.create(outdir, showWarnings = FALSE, recursive = TRUE)
+
+args_full  <- commandArgs(trailingOnly = FALSE)
+script_arg <- grep("--file=", args_full, value = TRUE)
+
+if (Sys.getenv("BLIT_MASTER_LOG") == "" && length(script_arg) > 0) {
+
+  log_file <- normalizePath(run_aggr_log, mustWork = FALSE)
+
+  script_path <- sub("--file=", "", script_arg)
+  script_path <- normalizePath(script_path, mustWork = FALSE)
+
+  cmd <- paste(
+    shQuote(file.path(Sys.getenv("R_HOME"), "bin", "Rscript")),
+    shQuote(script_path),
+    ">>", shQuote(log_file), "2>&1"
+  )
+
+  Sys.setenv(BLIT_MASTER_LOG = "1")
+  exec("bash", "-c", cmd) |> cmd_run()
+  quit(save = "no")
+}
+
+# ----- check -----
 cat("Checking if all tools have completed...\n")
 
 check_completion <- function() {
