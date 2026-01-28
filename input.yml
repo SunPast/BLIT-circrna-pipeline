@@ -15,10 +15,10 @@ data:
   fastp_dir: /data/home/dingjia/blit_fastp
 
   # BLIT pipeline 主程序目录（代码仓库位置）
-  pipeline_dir: /data/home/dingjia/BLIT-circRNA-pipeline
+  pipeline_dir: /data/home/dingjia/BLIT-circrna-pipeline
 
   # 样本列表文件（每行一个sample名。可注释，脚本可自动生成）
-  sample_list: /data/home/dingjia/BLIT-circRNA-pipeline/PHS003316.txt
+  sample_list: /data/home/dingjia/BLIT-circrna-pipeline/PHS003316.txt
 
   # 所有分析结果输出目录（主输出目录）
   result_dir: /data/home/dingjia/blit_test/RNA_phs003316/result
