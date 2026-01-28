@@ -11,7 +11,7 @@ prefix=${sample}
 config=$5
 source ${config}
 
-ENV_PATH=${ENV_FindCirc}
+ENV_PATH=${ENV_FINDCIRC}
 MICROMAMBA=${MICROMAMBA}
 
 outdir2=${oudir}/${prefix}.find_circ

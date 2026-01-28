@@ -10,7 +10,7 @@ prefix=${sample}
 config=$5
 source ${config}
 
-ENV_PATH=${ENV_circRNA_finder}
+ENV_PATH=${ENV_CIRCRNA_FINDER}
 MICROMAMBA=${MICROMAMBA}
 
 # NOTE:

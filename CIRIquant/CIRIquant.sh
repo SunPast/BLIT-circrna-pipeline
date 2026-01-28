@@ -10,7 +10,7 @@ prefix=${sample}
 config=$5
 source ${config}
 
-ENV_PATH=${ENV_CIRIquant}
+ENV_PATH=${ENV_CIRIQUANT}
 MICROMAMBA=${MICROMAMBA}
 
 outdir2=${oudir}/${prefix}.CIRI

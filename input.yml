@@ -35,7 +35,7 @@ reference:
   # 基因注释GTF文件
   gtf: /data/home/dingjia/pipeline/gencode.v34.annotation.gtf
 
-  # Circexplorer2注释参考文件（可注释，pipeline可自动生成）
+  # Circexplorer2注释参考文件（可注释，pipeline可自动生成；genome可改，默认hg38）
   ann_ref: /data/home/dingjia/pipeline/hg38_ref_all.txt
   genome: hg38
 

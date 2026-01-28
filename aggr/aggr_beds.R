@@ -6,8 +6,8 @@ library(yaml)
 cfg <- yaml::read_yaml("input.yml")
 
 Sys.setenv(
-  GTF_PATH = cfg$gtf,
-  COMMON_PY = file.path(cfg$pipeline_dir, "common/common.py")
+  GTF_PATH = cfg$reference$gtf,
+  COMMON_PY = file.path(cfg$reference$pipeline_dir, "common/common.py")
 )
 
 args = commandArgs(trailingOnly = TRUE)
