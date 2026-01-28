@@ -16,7 +16,7 @@ GTF=${REF_BASE}/gencode.v34.annotation.gtf
 STAR_INDEX=${REF_BASE}/STAR_index_2.7.10b
 BT2_PREFIX=${REF_BASE}/GRCh38.primary_assembly
 
-ANN_REF=${REF_BASE}/hg38_ref_all.txt
+ANN_REF=${REF_BASE}/hg38_ref.txt
 GENOME=${GENOME:-hg38}
 
 if [ ! -f "${ANN_REF}" ]; then
@@ -29,6 +29,7 @@ if [ ! -f "${ANN_REF}" ]; then
     exit 1
   else
     echo "✓ Circexplorer2 annotation created: ${ANN_REF}"
+    rm refFlat.txt.gz 2>/dev/null || true
   fi
 else
   echo "===> Circexplorer2 annotation exists, skipping..."

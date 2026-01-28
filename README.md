@@ -125,7 +125,14 @@ This step:
    pip install CIRIquant==1.1.2
    ```
 
-2. Thread Control
+2. CIRCexplorer2
+
+   The annotation for this tool relies on its internal script fetch_ucsc.py to download genome_ref.txt from the UCSC server. Therefore, the download may fail when your network connection is unstable.
+   To address this, we have also provided hg38_ref.txt in the repository for emergency use. You can directly use it if you encounter issues during your own configuration.
+
+   We recommend you refer to the [CIRCexplorer2 official documentation](https://circexplorer2.readthedocs.io/en/latest/) for more information.
+
+3. Thread Control
 
    Threads are controlled in:
 
@@ -133,7 +140,7 @@ This step:
    input.yml → threads:
    ```
 
-3. PATH to appmamba
+4. PATH to appmamba
 
    All conda environments are created under:
 
@@ -143,8 +150,8 @@ This step:
 
 ------
 
-## References
+  ## References
 
-- Original pipeline: [OncoHarmony-Network/circrna-pipeline](https://github.com/OncoHarmony-Network/circrna-pipeline)
-- Pipeline inspiration: [Yelab2020/ICBcircSig](https://github.com/Yelab2020/ICBcircSig), [nf-core/circrna](https://github.com/nf-core/circrna)
-- BLIT: [WangLabCSU/BLIT](https://github.com/WangLabCSU/BLIT)
+  - Original pipeline: [OncoHarmony-Network/circrna-pipeline](https://github.com/OncoHarmony-Network/circrna-pipeline)
+  - Pipeline inspiration: [Yelab2020/ICBcircSig](https://github.com/Yelab2020/ICBcircSig), [nf-core/circrna](https://github.com/nf-core/circrna)
+  - BLIT: [WangLabCSU/BLIT](https://github.com/WangLabCSU/BLIT)
