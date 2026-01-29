@@ -1,7 +1,3 @@
-library(devtools)
-setwd("~/blit")
-load_all()
-setwd("~/BLIT-circrna-pipeline")
 library(blit)
 library(yaml)
 
